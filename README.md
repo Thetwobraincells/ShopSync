@@ -1,4 +1,4 @@
-# 🛒 WhatsApp AI Shopkeeper
+# 🛒 ShopSync
 ### *An Agentic AI Assistant for Local Businesses*
 
 A self-hosted, 24/7 WhatsApp automation that uses local AI to manage inventory and assist customers. This project bridges the gap between a physical shop and a digital assistant without the monthly subscription costs of SaaS platforms.
