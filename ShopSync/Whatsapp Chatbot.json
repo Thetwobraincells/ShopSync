@@ -1,0 +1,685 @@
+{
+  "name": "Whatsapp Chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "Shopkeeper Flow",
+        "height": 432,
+        "width": 704,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        -192
+      ],
+      "typeVersion": 1,
+      "id": "a49aefc1-1a51-4d59-9d86-27251ac97334",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Customer FLow\n",
+        "height": 400,
+        "width": 704,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        272
+      ],
+      "typeVersion": 1,
+      "id": "8834ba93-83a8-4673-8638-186888d1f45a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.messages[0].text.body }}",
+        "options": {
+          "systemMessage": "You are the Helpful Shopping Assistant for Shivam's Shop.\n\nWhen a customer asks about a product, use the 'search_inventory' tool.\n\nIf the product is in stock, tell them the price and ask how many they want to add to their list.\n\nIf they specify a quantity, use the 'add_to_cart' tool to save their request.\n\nIf they ask 'What is in my cart?', summarize the items they've added so far.\n\nIf they say 'I'm done' or 'Check out', tell them: 'Perfect! I've sent your list to the shopkeeper. They will contact you shortly.'\n\nBe extremely polite and keep answers short for WhatsApp\n\nYou are strictly forbidden from inventing, guessing, or hallucinating products, prices, or quantities. If the 'search_inventory' tool returns an empty result, you MUST state exactly: \"The inventory is currently completely empty.\"\n\nYou are also forbidden to add or remove or change the price , of any item\n\nVERIFICATION RULE: Never assume an item exists just because the user mentioned it in their message. You must ONLY report items that are returned by the search_inventory tool. If the tool returns [] or \"No items found\", you must state the inventory is empty, even if the user claims an item is there."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        112,
+        320
+      ],
+      "id": "dbb08a9f-7954-4122-bff5-81ba1134c537",
+      "name": "Customer Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.messages[0].text.body }}",
+        "options": {
+          "systemMessage": "You are the Shop Management AI, the dedicated executive assistant for Shivam (The Boss). You are now in \"Admin Mode\" because the authentication code 'admin1234' was used.\n\n### 1. YOUR PERSONA\n- Tone: Professional, polite, and extremely efficient. \n- Style: Use bullet points for lists and keep responses concise for easy reading on WhatsApp.\n- Status: You are the ONLY one with permission to edit the inventory.\n\n### 2. AUTHENTICATION HANDLING\n- If the user's message is exactly \"admin1234\", respond with: \"Access Granted. Welcome back, Boss. I am ready to manage the shop. What would you like to check or update?\"\n\n### 3. TOOL USAGE RULES\n- INVENTORY UPDATES: Use the 'inventory_upsert' tool if the Boss wants to add new products or change stock/prices. \n   * Example: \"Add 50 Milk at 30rs\" -> Extract Item: Milk, Quantity: 50, Price: 30.\n   * Note: Always strip currency symbols (like 'rs') before sending data to the tool; send only the number.\n- INVENTORY CHECKS: Use the 'inventory_reader' tool if the Boss asks \"What's in stock?\", \"Check milk levels\", or \"Give me a status report.\"\n   * Always format the data from the tool into a clean bulleted list for the Boss.\n\n### 4. CONFIRMATIONS\n- Never leave the Boss wondering. After you successfully update a record, say: \"Done, Boss! [Item] has been updated. Current stock is [Quantity].\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        96,
+        -112
+      ],
+      "id": "be02b8ef-5e84-4d3a-afbd-2cda7dbcefa0",
+      "name": "Shopkeeper Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        48,
+        512
+      ],
+      "id": "6737910d-e068-4e8f-ba3d-0cf45d3ae2e3",
+      "name": "Ollama Customer",
+      "credentials": {
+        "ollamaApi": {
+          "id": "VuIUhWl6r6wJKyQW",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=={{ $json.sessionId }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        512
+      ],
+      "id": "b04876d7-3478-4521-8795-99cfbce8de59",
+      "name": "Simple Memory Customer"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=={{ $json.sessionId }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        80
+      ],
+      "id": "01c3e1b3-47c3-4b9d-800a-5910a8d06220",
+      "name": "Simple Memory Shopkeeper"
+    },
+    {
+      "parameters": {
+        "model": "llama3.1:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        48,
+        80
+      ],
+      "id": "02f0c623-79f5-4bf0-914e-db83a81badaa",
+      "name": "Ollama Shopkeeper",
+      "credentials": {
+        "ollamaApi": {
+          "id": "VuIUhWl6r6wJKyQW",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to add new products or update the stock/price of existing products. You must provide the Item_Name, and the new numeric value for Quantity or Price. Strip all currency symbols (like 'rs') before sending",
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "appCXN4EsQuFZrlKX",
+          "mode": "list",
+          "cachedResultName": "ShopkeeperBot",
+          "cachedResultUrl": "https://airtable.com/appCXN4EsQuFZrlKX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxZnWHmixoqWC46",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://airtable.com/appCXN4EsQuFZrlKX/tblxZnWHmixoqWC46"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Quantity": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Quantity', ``, 'number') }}",
+            "Price": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Price', ``, 'number') }}",
+            "id": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('id__using_to_match_', ``, 'string') }}",
+            "Item_Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Item_Name', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Item_Name",
+              "displayName": "Item_Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Quantity",
+              "displayName": "Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Price",
+              "displayName": "Price",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        336,
+        80
+      ],
+      "id": "8c1ff245-cf2c-41a8-bfd1-6d96758821ea",
+      "name": "inventory_upsert",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "E3HRqup43hwvuIKn",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to retrieve the current stock levels and prices of all items or a specific item. Use this when the shopkeeper asks for a report, a list of items, or checks if something is running low.\n\nIf this tool returns an empty array or no results, it means there are 0 items in the database",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCXN4EsQuFZrlKX",
+          "mode": "list",
+          "cachedResultName": "ShopkeeperBot",
+          "cachedResultUrl": "https://airtable.com/appCXN4EsQuFZrlKX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxZnWHmixoqWC46",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://airtable.com/appCXN4EsQuFZrlKX/tblxZnWHmixoqWC46"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        80
+      ],
+      "id": "82c5406e-ab8c-4b2d-9458-cf37cd062060",
+      "name": "inventory_reader",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "E3HRqup43hwvuIKn",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to check if an item is currently available in the shop and what its price is. It returns the 'Item_Name', 'Price', and 'Quantity'. Use this whenever a customer asks 'Do you have...?' or 'How much is...? or similar\n\nIf this tool returns an empty array or no results, it means there are 0 items in the database",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appCXN4EsQuFZrlKX",
+          "mode": "list",
+          "cachedResultName": "ShopkeeperBot",
+          "cachedResultUrl": "https://airtable.com/appCXN4EsQuFZrlKX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxZnWHmixoqWC46",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://airtable.com/appCXN4EsQuFZrlKX/tblxZnWHmixoqWC46"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        352,
+        512
+      ],
+      "id": "1b7e8fbc-61b0-40ff-835c-250c233e9f80",
+      "name": "search_inventory",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "E3HRqup43hwvuIKn",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Use this tool to add an item to the customer's shopping list. You MUST provide the 'Item_Name' and 'Quantity'. The tool will automatically use the customer's phone number to identify the order.",
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appCXN4EsQuFZrlKX",
+          "mode": "list",
+          "cachedResultName": "ShopkeeperBot",
+          "cachedResultUrl": "https://airtable.com/appCXN4EsQuFZrlKX"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl9zBxOzkERReVeV",
+          "mode": "list",
+          "cachedResultName": "Cart",
+          "cachedResultUrl": "https://airtable.com/appCXN4EsQuFZrlKX/tbl9zBxOzkERReVeV"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Quantity": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Quantity', ``, 'number') }}",
+            "Customer_Phone": "={{ $json.messages[0].from }}",
+            "Item_Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Item_Name', ``, 'string') }}",
+            "Status": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Customer_Phone",
+              "displayName": "Customer_Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Item_Name",
+              "displayName": "Item_Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Quantity",
+              "displayName": "Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "Rejected",
+                  "value": "Rejected"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        480,
+        512
+      ],
+      "id": "4740ce2a-c08f-404d-882e-e271ebe1f3dd",
+      "name": "add_to_cart",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "E3HRqup43hwvuIKn",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        208
+      ],
+      "id": "96d8b4ae-fbf7-413c-a178-37283722da2c",
+      "name": "WhatsApp Trigger",
+      "webhookId": "6d74db26-5461-4632-8e23-36fa312cb3fa",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "lMh9gBEW1xPgo8Ak",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6f480e49-a8d9-49ac-94b3-90b9ea2cb466",
+              "leftValue": "={{ $json.messages[0].text.body }}",
+              "rightValue": "admin1234",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -352,
+        208
+      ],
+      "id": "d49b9070-8d3f-4d10-899f-7a1015d0a805",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1050712274786443",
+        "recipientPhoneNumber": "+91 77100 83816",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        320
+      ],
+      "id": "07345323-25a1-4ad4-b26a-7ff675ece44f",
+      "name": "Send message",
+      "webhookId": "1e200485-fe95-45c9-aa5c-2f2505d1ed60",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "X8Du3P4g2caWijsV",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1050712274786443",
+        "recipientPhoneNumber": "917710083816",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        496,
+        -112
+      ],
+      "id": "48aa8be9-aba0-42c4-9740-aa2987ab64b5",
+      "name": "Send message1",
+      "webhookId": "eb7b4a7d-a350-4f0e-941e-61657e979aab",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "X8Du3P4g2caWijsV",
+          "name": "WhatsApp account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Customer Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Shopkeeper Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Customer": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Customer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory Customer": {
+      "ai_memory": [
+        [
+          {
+            "node": "Customer Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory Shopkeeper": {
+      "ai_memory": [
+        [
+          {
+            "node": "Shopkeeper Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Shopkeeper": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Shopkeeper Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inventory_upsert": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopkeeper Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "inventory_reader": {
+      "ai_tool": [
+        [
+          {
+            "node": "Shopkeeper Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_inventory": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "add_to_cart": {
+      "ai_tool": [
+        [
+          {
+            "node": "Customer Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Shopkeeper Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Customer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        []
+      ]
+    },
+    "Send message1": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "adca6402-d044-4f3d-a7f5-2474037364fd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bf4fbc8e33666bf54eeb3316ca9b2448401db4b38c612b8ebdef4739b5139df2"
+  },
+  "id": "s6vt1WMfRbiNLvJF",
+  "tags": []
+}
